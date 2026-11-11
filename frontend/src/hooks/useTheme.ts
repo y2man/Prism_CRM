@@ -1,0 +1,2 @@
+import { useEffect, useState } from 'react';
+export function useTheme(): [boolean, () => void] { const [dark,setDark]=useState(()=>{const saved=localStorage.getItem('prism-theme');return saved ? saved==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches});useEffect(()=>{document.documentElement.classList.toggle('dark',dark);localStorage.setItem('prism-theme',dark?'dark':'light')},[dark]);return [dark,()=>setDark(v=>!v)] }

@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prism
+      POSTGRES_PASSWORD: change-this-local-password
+      POSTGRES_DB: prism_crm
+    ports:
+      - "5432:5432"
+    volumes:
+      - prism_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prism -d prism_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://prism:${POSTGRES_PASSWORD:-change-this-local-password}@db:5432/prism_crm
+      FRONTEND_ORIGIN: http://localhost:8080
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
+      ENVIRONMENT: production
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROQ_FALLBACK_MODELS: ${GROQ_FALLBACK_MODELS:-llama-3.1-8b-instant,llama-3.3-70b-versatile}
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+volumes:
+  prism_postgres:
